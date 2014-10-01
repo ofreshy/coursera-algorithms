@@ -10,3 +10,7 @@
 /8puzzle/src/8puzzle.zip
 
 /bin*
+.classpath
+.project
+.settings
+
