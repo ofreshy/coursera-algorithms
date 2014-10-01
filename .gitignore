@@ -1,6 +1,6 @@
 /.metadata/
 
-/8puzzle/bin/.DS_Store
+.DS_Store
 
 /8puzzle/bin/Solver$BoardSolver.class
 /8puzzle/bin/Solver$HamComparator.class
