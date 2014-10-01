@@ -7,7 +7,7 @@ import java.util.List;
 public class Solver {
 
     private static final int NO_SOLUTION_MOVES = -1;
-    private static final Iterable<Board> NO_SOLUTION_ITER = null;
+    private static final Iterable<GoodBoard> NO_SOLUTION_ITER = null;
 
     private static final HamComparator HAM = new HamComparator();
     private static final ManComparator MAN = new ManComparator();
@@ -16,13 +16,13 @@ public class Solver {
     private final BoardSolver original;
     private final BoardSolver equivilance;
     
-    private Iterable<Board> solution;
+    private Iterable<GoodBoard> solution;
     private int movesToSolution;
     
-    public Solver(Board initial) {  
+    public Solver(GoodBoard initial) {  
         this(initial, true);
     }
-    private Solver(Board initial, boolean useMan) {
+    private Solver(GoodBoard initial, boolean useMan) {
         if (useMan) {
             this.comparator     = MAN;
         }
@@ -47,7 +47,7 @@ public class Solver {
        }
        
        if (original.solved()) {
-           List<Board> sol = buildSolution(original.currentNode);
+           List<GoodBoard> sol = buildSolution(original.currentNode);
            solution = sol;
            movesToSolution = sol.size()-1;
        }
@@ -56,8 +56,8 @@ public class Solver {
            movesToSolution = NO_SOLUTION_MOVES;
        }        
     }
-    private List<Board> buildSolution(Node currentNode) {
-        LinkedList<Board> sol = new LinkedList<Board>();
+    private List<GoodBoard> buildSolution(Node currentNode) {
+        LinkedList<GoodBoard> sol = new LinkedList<GoodBoard>();
         Node n = currentNode;
         while (n != null) {
             sol.addFirst(n.board);
@@ -72,7 +72,7 @@ public class Solver {
     public int moves() {     
         return movesToSolution;        
     }
-    public Iterable<Board> solution() { 
+    public Iterable<GoodBoard> solution() { 
         return solution;        
     }
     
@@ -80,13 +80,13 @@ public class Solver {
         private final MinPQ<Node> queue;
         private Node currentNode;
         
-        BoardSolver(Board initialBoard, Comparator<Node> comparator) {
+        BoardSolver(GoodBoard initialBoard, Comparator<Node> comparator) {
             queue = new MinPQ<Node>(comparator);
             currentNode = newNode(initialBoard, null, 0);                
             queue.insert(currentNode);
         }
         
-        Node newNode(Board board, Node prev, int moves) {
+        Node newNode(GoodBoard board, Node prev, int moves) {
             return new Node(board, prev, moves);
         }
         
@@ -97,13 +97,13 @@ public class Solver {
         void iter() {
             currentNode = queue.delMin();
             Node previous = currentNode.previousNode;
-            Board board = currentNode.board;
+            GoodBoard board = currentNode.board;
             int moves = currentNode.movesSoFar + 1;
-            Board motherBoard = null;
+            GoodBoard motherBoard = null;
             if (previous != null) {
                 motherBoard = previous.board;
             }
-            for (Board neighbour : board.neighbors()) {
+            for (GoodBoard neighbour : board.neighbors()) {
                 if (neighbour.equals(motherBoard)) {
                     continue;
                 }
@@ -119,12 +119,12 @@ public class Solver {
     
     
     private static class Node {
-        private final Board board;
+        private final GoodBoard board;
         private final Node previousNode;
         private final int movesSoFar;
         private int cachedManVal = -1;
         
-        public Node(Board board, Node previousNode, int movesSoFar) {
+        public Node(GoodBoard board, Node previousNode, int movesSoFar) {
             this.board = board;
             this.previousNode = previousNode;
             this.movesSoFar = movesSoFar;
@@ -169,7 +169,7 @@ public class Solver {
         for (int i = 0; i < N; i++)
             for (int j = 0; j < N; j++)
                 blocks[i][j] = in.readInt();
-        Board initial = new Board(blocks);
+        GoodBoard initial = new GoodBoard(blocks);
 
         // solve the puzzle
         Solver solver = new Solver(initial);
@@ -179,7 +179,7 @@ public class Solver {
             StdOut.println("No solution possible");
         else {
             StdOut.println("Minimum number of moves = " + solver.moves());
-            for (Board board : solver.solution()) 
+            for (GoodBoard board : solver.solution()) 
                StdOut.println(board);
         }
     }

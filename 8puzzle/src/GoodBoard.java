@@ -1,13 +1,19 @@
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 /**
+ * This is my preferred implementation of the board which uses
+ * an inner class Index in order navigate .
+ * 
+ * Unfortunately, 
+ * it does not pass most of the memory tests as it 
+ * requires 24 Bytes! more than allowed
+ * ( A constant factor )
  * 
  * @author offer
  *
  */
-public class Board {
+public class GoodBoard {
 
     private static final int SPACE = 0;
 
@@ -20,8 +26,9 @@ public class Board {
     // Cached values
     private int hamming = -1;
     private int manhattan = -1;
+    private Index spaceIndex = null;
 
-    public Board(int[][] blocks) {
+    public GoodBoard(int[][] blocks) {
         this.N = blocks.length;
         this.blocks = new int[N][N];
         for (int i = 0; i < N; i++) {
@@ -41,27 +48,24 @@ public class Board {
             return hamming;
         }
         hamming = 0;
+        int expectedBlock = 0;
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
-                int expectedBlock = getExpectedBlock(i, j);
+                expectedBlock++;
                 int actualBlock = blocks[i][j];
 
                 if (actualBlock == SPACE)
                     continue;                
-                
+
+                if (i == N-1 && j == N -1) {
+                    expectedBlock = SPACE; 
+                }
                 if (expectedBlock != actualBlock) {
                     hamming++;
                 }
             }
         }
         return hamming;
-    }
-    
-    private int getExpectedBlock(int i, int j) {
-        if (i == N-1 && j == N-1) {
-            return SPACE; 
-        }
-        return i * N + j + 1;
     }
 
     public int manhattan() { 
@@ -88,25 +92,18 @@ public class Board {
     }
 
     public boolean isGoal() { // is this board the goal board?
-        for (int i = 0; i < N; i++) {
-            for (int j = 0; j < N; j++) {
-                int expectedBlock = getExpectedBlock(i, j);
-                int actualBlock = blocks[i][j];
-                if (actualBlock != expectedBlock)
-                    return false;                
-            }
-        }
-        return true;
+        return hamming() == 0;
     }
 
-    public Board twin() { 
-        Board twin = new Board(blocks);
+    public GoodBoard twin() { 
+        GoodBoard twin = new GoodBoard(blocks);
         boolean lookingForTwin = true;
         for (int i = N-1; lookingForTwin && i >= 0; i--) {
-            for (int j = 0; lookingForTwin && j < N-2; j++) {
-                
-                if (blocks[i][j] != SPACE && blocks[i][j+1] != SPACE) {
-                    twin = exchange(i, j, i, j+1);
+            for (int j = 0; lookingForTwin && j < N-1; j++) {
+                Index i1 = new Index(i , j);
+                Index i2 = new Index(i, j+1);
+                if (get(i1) != SPACE && get(i2) != SPACE) {
+                    twin = exchange(i1, i2);
                     lookingForTwin = false;
                 }
             }
@@ -123,7 +120,7 @@ public class Board {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        Board other = (Board) obj;
+        GoodBoard other = (GoodBoard) obj;
         if (N != other.N)
             return false;
         for (int i = 0; i < N; i++) {
@@ -137,42 +134,48 @@ public class Board {
         return true;
     }
 
-    public Iterable<Board> neighbors() { // all neighboring boards
-        int i = 0 , j = 0;
-        while (blocks[i][j] != SPACE) {
-            j++;
-            if (j == N) {
-                j = 0;
-                i++;
-            }
+    public Iterable<GoodBoard> neighbors() { // all neighboring boards
+        spaceIndex = findSpaceIndex();
+        List<GoodBoard> neighbours = new LinkedList<GoodBoard>();
+        if (spaceIndex.canGoDown()) {
+            neighbours.add(exchange(spaceIndex, spaceIndex.goDown())); 
         }
-        
-        List<Board> neighbours = new LinkedList<Board>();
-        // if can go down
-        if (i < N-1) {
-            neighbours.add(exchange(i, j, i+1, j)); 
+        if (spaceIndex.canGoUp()) {
+            neighbours.add(exchange(spaceIndex, spaceIndex.goUp()));
         }
-        // if can go up
-        if (i > 0) {
-            neighbours.add(exchange(i, j, i-1, j)); 
+        if (spaceIndex.canGoRight()) {
+            neighbours.add(exchange(spaceIndex, spaceIndex.goRight()));
         }
-        // if can go right
-        if (j < N-1) {
-            neighbours.add(exchange(i, j, i, j+1)); 
-        }
-        // if can go left
-        if (j > 0) {
-            neighbours.add(exchange(i, j, i, j-1)); 
+        if (spaceIndex.canGoLeft()) {
+            neighbours.add(exchange(spaceIndex, spaceIndex.goLeft()));
         }
         return neighbours;
     }
 
-   
-    private Board exchange(int i, int j , int ii, int jj) {
-        int block = blocks[i][j];
-        Board newBoard = new Board(blocks);
-        newBoard.blocks[i][j] = newBoard.blocks[ii][jj];
-        newBoard.blocks[ii][jj] = block;
+    private int get(Index i) {
+        return blocks[i.row][i.col];
+    }
+
+    private Index findSpaceIndex() {
+        if (spaceIndex != null) {
+            return spaceIndex;
+        }
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
+                if (blocks[i][j] == SPACE) {
+                    spaceIndex = new Index(i, j);
+                }
+            }
+        }
+        return spaceIndex;
+    }
+
+
+    private GoodBoard exchange(Index i1, Index i2) {
+        int block = blocks[i1.row][i1.col];
+        GoodBoard newBoard = new GoodBoard(blocks);
+        newBoard.blocks[i1.row][i1.col] = newBoard.blocks[i2.row][i2.col];
+        newBoard.blocks[i2.row][i2.col] = block;
         return newBoard;       
     }
 
@@ -187,7 +190,72 @@ public class Board {
         return sb.toString();
     }
 
-    
+    private class Index {
+        private final int row;
+        private final int col;
+        Index(int row, int col) { 
+            this.row = row;
+            this.col = col;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            Index other = (Index) obj;
+
+            if (col != other.col)
+                return false;
+            if (row != other.row)
+                return false;
+            return true;
+        }
+
+        public String toString() {
+            return "("+row+","+col+")"; 
+        }
+
+        private boolean canGoUp() {
+            return row > 0;
+        }
+        private boolean canGoDown() {
+            return row < (N-1);
+        }
+        private boolean canGoRight() {
+            return col < (N-1);
+        }
+        private boolean canGoLeft() {
+            return col > 0;
+        }
+        private Index goUp() {
+            return new Index(row-1, col);
+        }
+        private Index goDown() {
+            return new Index(row+1, col);
+        }
+        private Index goRight() {
+            return new Index(row, col+1);
+        }
+        private Index goLeft() {
+            return new Index(row, col-1);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 
     public static void main(String[] args) {
         testCase1();
@@ -201,7 +269,7 @@ public class Board {
 
     private static void testCase1() {
         String s1 = "0  1  3  4  2  5  7  8  6";
-        Board b1 = fromString(s1);
+        GoodBoard b1 = fromString(s1);
         System.out.println(b1);
         assert (b1.N == 3);
         assert (!b1.isGoal());
@@ -209,42 +277,38 @@ public class Board {
 
         assert (b1.hamming() == 4);
         assert (b1.manhattan() == 4);
-        
-        String[] neighbours = {
-                "1  0  3  4  2  5  7  8  6", 
-                "4  1  3  0  2  5  7  8  6"};       
-        testNeighbours(s1, neighbours);
-        
-       
-    }
-    
-    private static void testNeighbours(String board, String[] neighbours) {
-        Board b = fromString(board);
-        List<Board> ns = new ArrayList<Board>(neighbours.length);
-        for (String n : neighbours) {
-            ns.add(fromString(n));
-        }
-        int actualNum = 0;
-        for (Board neighbour : b.neighbors()) {
-            actualNum++;
-            assert (ns.contains(neighbour));            
-        }
-        assert (actualNum == ns.size());
+
+        Index firstIndex = b1.findSpaceIndex();
+        assert (firstIndex.equals(b1.new Index(0 , 0)));
+        assert (!firstIndex.canGoLeft());
+        assert (firstIndex.canGoRight());
+        assert (!firstIndex.canGoUp());
+        assert (firstIndex.canGoDown());
+        assert (firstIndex.goRight().equals(b1.new Index(0 , 1)));
+        assert (firstIndex.goDown().equals(b1.new Index(1 , 0)));
+
+        Index oneRight = firstIndex.goRight();
+        GoodBoard b2 = b1.exchange(firstIndex, firstIndex.goRight());
+        assert (b2.get(firstIndex) == 1);
+        assert (b2.get(oneRight) == 0);
+        assert (b2.findSpaceIndex().equals(oneRight));
     }
 
     private static void testCase2() {
-       
-        testNeighbours("0  1  3  4  2  5  7  8  6", 
-                new String[]{ 
-                "1  0  3  4  2  5  7  8  6",  
-                "4  1  3  0  2  5  7  8  6"});
-       
-        testNeighbours("8  1  3  4  0  2  7  6  5", 
-                new String[]{ 
-                "8  0  3  4  1  2  7  6  5",  
-                "8  1  3  4  6  2  7  0  5",
-                "8  1  3  0  4  2  7  6  5",
-                "8  1  3  4  2  0  7  6  5"});        
+        String s = "8  1  3  4  0  2  7  6  5";
+        GoodBoard b = fromString(s);
+        System.out.println(b);
+        assert (b.N == 3);
+        assert (!b.isGoal());
+        assert (b.hamming() == 5);
+        assert (b.manhattan() == 10);
+
+        Index spaceIndex = b.findSpaceIndex();
+        assert (spaceIndex.equals(b.new Index(1, 1)));
+        assert (spaceIndex.canGoLeft());
+        assert (spaceIndex.canGoRight());
+        assert (spaceIndex.canGoUp());
+        assert (spaceIndex.canGoDown());
     }
 
     /**
@@ -252,7 +316,7 @@ public class Board {
      */
     private static void testCase3() {
         String s = "1  2  3  4  5  6  7  8  0";
-        Board b = fromString(s);
+        GoodBoard b = fromString(s);
         System.out.println(b);
         assert (b.N == 3);
         assert (b.isGoal());
@@ -265,7 +329,7 @@ public class Board {
      */
     private static void testCase4() {
         String s = "1  2  3  0";
-        Board b = fromString(s);
+        GoodBoard b = fromString(s);
         System.out.println(b);
         assert (b.N == 2);
         assert (b.isGoal());
@@ -278,7 +342,7 @@ public class Board {
      */
     private static void testCase5() {
         String s = "1  2  3  4  5  6  7  8  9  10  11  13  12  14  15  0";
-        Board b = fromString(s);
+        GoodBoard b = fromString(s);
         System.out.println(b);
         assert (b.N == 4);
         assert (!b.isGoal());
@@ -291,7 +355,7 @@ public class Board {
      */
     private static void testCase6() {
         String s = "1  2  3  4  5  6  8  7  0";
-        Board b = fromString(s);
+        GoodBoard b = fromString(s);
         System.out.println(b.twin());
         assertBoard(b.twin(), "1  2  3  4  5  6  7  8  0");
     }
@@ -301,13 +365,13 @@ public class Board {
      */
     private static void testCase7() {
         String s = "1  2  3  7  0  6  5  4  8 ";
-        Board b = fromString(s);
+        GoodBoard b = fromString(s);
         System.out.println(b);
         System.out.println(b.neighbors());
     }
 
 
-    private static Board fromString(String s) {
+    private static GoodBoard fromString(String s) {
         String[] parsed = s.trim().split("  ");
         int N = (int) Math.sqrt(parsed.length);
         int[][] blocks = new int[N][N];
@@ -317,11 +381,11 @@ public class Board {
                 blocks[i][j] = Integer.parseInt(parsed[index++]);
             }
         }
-        return new Board(blocks);
+        return new GoodBoard(blocks);
     }
     
-    private static void assertBoard(Board actual, String s) {
-        Board expected = fromString(s);
+    private static void assertBoard(GoodBoard actual, String s) {
+        GoodBoard expected = fromString(s);
         assert (expected.equals(actual));
     }
 
