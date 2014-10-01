@@ -8,3 +8,5 @@
 /8puzzle/bin/Solver$Node.class
 
 /8puzzle/src/8puzzle.zip
+
+/bin*
