@@ -103,7 +103,7 @@ public class Board {
         Board twin = new Board(blocks);
         boolean lookingForTwin = true;
         for (int i = N-1; lookingForTwin && i >= 0; i--) {
-            for (int j = 0; lookingForTwin && j < N-2; j++) {
+            for (int j = 0; lookingForTwin && j <= N-2; j++) {
                 
                 if (blocks[i][j] != SPACE && blocks[i][j+1] != SPACE) {
                     twin = exchange(i, j, i, j+1);
@@ -294,6 +294,11 @@ public class Board {
         Board b = fromString(s);
         System.out.println(b.twin());
         assertBoard(b.twin(), "1  2  3  4  5  6  7  8  0");
+        
+        s = "1  2  3  0";
+        b = fromString(s);
+        System.out.println(b.twin());
+        assertBoard(b.twin(), "2  1  3  0");
     }
     
     /**
