@@ -1,3 +1,10 @@
 /.metadata/
 
 /8puzzle/bin/.DS_Store
+
+/8puzzle/bin/Solver$BoardSolver.class
+/8puzzle/bin/Solver$HamComparator.class
+/8puzzle/bin/Solver$ManComparator.class
+/8puzzle/bin/Solver$Node.class
+
+/8puzzle/src/8puzzle.zip
