@@ -13,8 +13,6 @@ public class RectHV {
         }
         topRight = new Point2D(xmax, ymax);
         bottomLeft = new Point2D(xmin,ymin);
-
-
     }
 
     public double xmin() {                           // minimum x-coordinate of rectangle
@@ -34,7 +32,8 @@ public class RectHV {
      * @param p
      * @return
      */
-    public boolean contains(Point2D p) {             // does this rectangle contain the point p (either inside or on boundary)?
+    public boolean contains(Point2D p) {             
+        // does this rectangle contain the point p (either inside or on boundary)?
         return (xInRange(p.x()) && yInRange(p.y()));
     }
 
@@ -44,21 +43,9 @@ public class RectHV {
     private boolean yInRange(double y) {
         return ymin() <= y && y <= ymax();
     }
-    public boolean intersects(RectHV that) {          // does this rectangle intersect that rectangle (at one or more points)?
-        // easy to reject      
-        if (that.ymin() > this.ymax()) {
-            return false;
-        }
-        if (that.ymax() < this.ymin()) {
-            return false;
-        }
-        if (that.xmin() > this.xmax()) {
-            return false;
-        }
-        if (that.xmax() < this.xmin()) {
-            return false;
-        }
-        return true;
+    public boolean intersects(RectHV that) {         
+        // does this rectangle intersect that rectangle (at one or more points)?
+       return (contains(that.bottomLeft) || contains(that.topRight));
     }
     public double distanceTo(Point2D p) {            
         // Euclidean distance from point p to the closest point in rectangle
@@ -140,10 +127,19 @@ public class RectHV {
 
     public static void main(String[] args) {
         checkDraw();
+        testDistances();
+    }
+
+    private static void testDistances() {
+        RectHV rect = new RectHV(0.4, 0.3, 0.8, 0.6);
+        assert rect.distanceTo(new Point2D(0, 0)) == 0.5;
+        assert rect.distanceTo(new Point2D(0.1, 0.4)) - 0.3 < 0.0001;
+        assert rect.distanceTo(new Point2D(0.6, 0.5)) - 0.0 < 0.0001;
+        assert rect.distanceTo(new Point2D(0.5, 1)) - 0.4 < 0.0001;
     }
 
     private static void checkDraw() {
-        new RectHV(-10, -10, 20, 20).draw();        
+        new RectHV(0.1, 0.1, 0.2, 0.2).draw();        
     }
 
 

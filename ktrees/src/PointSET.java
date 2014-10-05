@@ -7,7 +7,7 @@ public class PointSET {
     SET<Point2D> set;
 
     public PointSET()  {                           
-        // construct an empty set of points
+        // constructs an empty set of points
         set = new SET<Point2D>();
     }  
     public boolean isEmpty()  {                     
@@ -149,10 +149,4 @@ public class PointSET {
             assert !ps.contains(p);
         }
     }
-
-
-
-
-
-
 }
